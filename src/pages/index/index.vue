@@ -13,7 +13,7 @@
         <card :text="motto"></card>
       </div>
     </div>
-
+    <button type="primary" @getuserinfo="handleUserInfo" open-type="getUserInfo">授权按钮</button>
     <form class="form-container">
       <input type="text" class="form-control" v-model="motto" placeholder="v-model" />
       <input type="text" class="form-control" v-model.lazy="motto" placeholder="v-model.lazy" />
@@ -39,6 +39,10 @@ export default {
   },
 
   methods: {
+    handleUserInfo(res) {
+      console.log('res', res);
+    },
+
     bindViewTap() {
       const url = '../logs/main';
       wx.navigateTo({ url });
@@ -47,9 +51,13 @@ export default {
       // 调用登录接口
       const loginRes = await login();
       console.log('login', loginRes);
-      const res = await getUserInfo();
-      console.log('res', res);
-      this.userInfo = res.userInfo;
+      try {
+        const res = await getUserInfo();
+        console.log('res', res);
+        this.userInfo = res.userInfo;
+      } catch (e) {
+        console.log(e);
+      }
     },
     clickHandle(msg, ev) {
       console.log('clickHandle:', msg, ev);
