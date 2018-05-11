@@ -1,6 +1,6 @@
 # mpvue-starter
 
-> A Mpvue project
+> A mpvue project template
 
 ## Build Setup
 
