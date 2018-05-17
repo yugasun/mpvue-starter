@@ -5,7 +5,7 @@
  * @Email: yuga.sun.bj@gmail.com
  * @Date: 2018-05-11 15:27:03
  * @Last Modified by: yugasun
- * @Last Modified time: 2018-05-11 16:24:57
+ * @Last Modified time: 2018-05-16 18:49:14
  */
 
 import wx from './wx';
@@ -148,6 +148,18 @@ export function previewImage(current, urls) {
     wx.previewImage({
       current,
       urls,
+      success: resolve,
+      fail: reject,
+    });
+  });
+}
+
+export function navigateToMiniProgram(appId, path = '', extraData = {}) {
+  return new Promise((resolve, reject) => {
+    wx.navigateToMiniProgram({
+      appId,
+      path,
+      extraData,
       success: resolve,
       fail: reject,
     });

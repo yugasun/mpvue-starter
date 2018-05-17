@@ -1,11 +1,9 @@
-import request from '@/utils/request';
+import fly from '@/utils/fly';
 import {
   login,
   getUserInfo,
   getSetting,
-  getStorage,
   setStorage,
-  uploadFile,
 } from '@/utils/wechat';
 import wx from '@/utils/wx';
 import api from './api';
@@ -16,8 +14,12 @@ const interfaces = {
    */
   async getWxUserInfo() {
     try {
-      // 判断用户是否允许授权
       const loginData = await login();
+      /**
+       * 注意：
+       * 如果是第一次进入，这里是会报错的
+       * 参考：https://developers.weixin.qq.com/miniprogram/dev/api/open.html#wxgetuserinfoobject
+       */
       const userInfo = await getUserInfo();
       userInfo.code = loginData.code;
       return userInfo;
@@ -28,27 +30,11 @@ const interfaces = {
   },
 
   /**
-   * 用户登录接口
+   * 用户登录接口，与服务端交互，这里只是个demo
    */
   async login() {
     try {
-      // 1. 检查用户是否拒绝授权
-      const { authSetting } = await getSetting();
-      // 如果没被授权，则强制进入授权页
-      if (
-        authSetting['scope.userInfo'] !== undefined
-        && authSetting['scope.userInfo'] === false
-      ) {
-        wx.showModal({
-          showCancel: false,
-          title: '提示',
-          content: '请允许小程序获取用户信息！',
-          success() {
-            wx.openSetting();
-          },
-        });
-      }
-      // 2. 获取用户信息
+      // 获取用户信息
       const userInfoRaw = await interfaces.getWxUserInfo();
       // 兼容小程序拒绝授权
       if (!userInfoRaw) {
@@ -59,7 +45,7 @@ const interfaces = {
         });
         return false;
       }
-      const userInfo = await request(
+      const userInfo = await fly.request(
         api.user.login.url,
         {
           code: userInfoRaw.code,
@@ -72,7 +58,7 @@ const interfaces = {
           method: api.user.login.method,
         },
       );
-      await setStorage('session3rd', userInfo.data.session3rd);
+      await setStorage('session3rd', userInfo.session3rd);
       return userInfo;
     } catch (e) {
       console.log(e);
@@ -99,102 +85,6 @@ const interfaces = {
     } catch (e) {
       console.log(e);
       return false;
-    }
-  },
-
-  async getUserInfo() {
-    const res = await request(
-      api.user.userInfo.url,
-      null,
-      {
-        method: api.user.userInfo.method,
-      },
-    );
-    if (res.status === 1) { // 获取成功
-      return res.data;
-    }
-    wx.showModal({
-      showCancel: false,
-      title: '提示',
-      content: '获取用户信息失败，请关闭重新进入。',
-    });
-    return false;
-  },
-
-  /**
-   * 上传图片
-   * @param {String} filePath 微信选择图片路径
-   */
-  async uploadFile(filePath) {
-    try {
-      const session3rd = await getStorage('session3rd');
-      const res = await uploadFile(
-        api.picture.upload.url,
-        'file',
-        filePath,
-        {},
-        {
-          'x-session3rd': session3rd,
-        },
-      );
-      return JSON.parse(res.data);
-    } catch (e) {
-      wx.showModal({
-        showCancel: false,
-        title: '提示',
-        content: `提交信息失败。${e.message}`,
-      });
-      return false;
-    }
-  },
-
-  /**
-   * 提交表单数据
-   * @param {Object} data
-   */
-  async submitFormData(submitKey, data) {
-    wx.showLoading({
-      title: '提交中',
-    });
-    try {
-      const res = request(
-        api.form.submit.url,
-        {
-          pic: data.picUrl || '',
-          order_id: data.orderId || '',
-          name: data.realname,
-          addr: data.address,
-          mobile: data.mobile,
-        },
-        {
-          method: api.form.method,
-        },
-      );
-      wx.hideLoading();
-      return res;
-    } catch (e) {
-      wx.hideLoading();
-      wx.showModal({
-        showCancel: false,
-        title: '提示',
-        content: `提交信息失败。${e.message}`,
-      });
-      return false;
-    }
-  },
-
-  async share() {
-    try {
-      const res = await request(
-        api.user.share.url,
-        null,
-        {
-          method: api.user.share.method,
-        },
-      );
-      console.log(res);
-    } catch (e) {
-      console.log(e);
     }
   },
 };
